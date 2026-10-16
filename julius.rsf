@@ -1,7 +1,7 @@
 BasicInfo:
   Title                   : "Julius"
   ProductCode             : "CTR-P-C3DS"
-  Logo                    : None
+  Logo                    : Homebrew
 
 TitleInfo:
   Category                : Application
@@ -23,7 +23,14 @@ AccessControlInfo:
 
   FileSystemAccess:
    - DirectSdmc
+   - Core
    - DirectSdmcWrite
+
+  # Virtual Address Mappings for DSP Audio and VRAM
+  IORegisterMapping:
+   - 1ff00000-1ff7ffff
+  MemoryMapping:
+   - 1f000000-1f5fffff:r
 
   MemoryType                    : Application
   IdealProcessor                : 0
@@ -41,9 +48,11 @@ AccessControlInfo:
   RunnableOnSleep               : false
   SpecialMemoryArrange          : true
 
-  # Unlock New 3DS 804 MHz CPU clock and 2MB L2 cache
-  CpuSpeed                      : 804MHz
+  SystemMode                    : 64MB
+  SystemModeExt                 : 124MB
+  CpuSpeed                      : 268MHz
   EnableL2Cache                 : true
+  CanAccessCore2                : true
 
   SystemCallAccess:
     ControlMemory: 1
@@ -144,3 +153,33 @@ SystemControlInfo:
   SaveDataSize: 0KB
   RemasterVersion: 0
   StackSize: 0x80000
+
+  Dependency:
+    ac: 0x0004013000002402
+    am: 0x0004013000001502
+    boss: 0x0004013000003402
+    camera: 0x0004013000001602
+    cecd: 0x0004013000002602
+    cfg: 0x0004013000001702
+    codec: 0x0004013000001802
+    csnd: 0x0004013000002702
+    dlp: 0x0004013000002802
+    dsp: 0x0004013000001a02
+    friends: 0x0004013000003202
+    gpio: 0x0004013000001b02
+    gsp: 0x0004013000001c02
+    hid: 0x0004013000001d02
+    i2c: 0x0004013000001e02
+    ir: 0x0004013000003302
+    mcu: 0x0004013000001f02
+    ndm: 0x0004013000002b02
+    news: 0x0004013000003502
+    nim: 0x0004013000002c02
+    nwm: 0x0004013000002d02
+    pdn: 0x0004013000002102
+    ps: 0x0004013000003102
+    ptm: 0x0004013000002202
+    ro: 0x0004013000003702
+    socket: 0x0004013000002e02
+    spi: 0x0004013000002302
+    ssl: 0x0004013000002f02

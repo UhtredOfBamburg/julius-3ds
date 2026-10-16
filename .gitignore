@@ -39,3 +39,4 @@ local.properties
 /android/julius/src/main/play
 /dist/
 *.cia
+*.dmp
