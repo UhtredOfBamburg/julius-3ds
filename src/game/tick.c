@@ -99,7 +99,14 @@ static void advance_month(void)
     city_festival_update();
     tutorial_on_month_tick();
     if (setting_monthly_autosave()) {
+#ifdef __3DS__
+        // On 3DS SD cards, only autosave once a year in December instead of every 15 seconds
+        if (game_time_month() == 11) {
+            game_file_write_saved_game("autosave.sav");
+        }
+#else
         game_file_write_saved_game("autosave.sav");
+#endif
     }
 }
 

@@ -63,6 +63,7 @@ static void load_default_settings(void)
     data.gods_enabled = 1;
     data.victory_video = 0;
     data.last_advisor = ADVISOR_LABOR;
+    data.monthly_autosave = 0;
 
     setting_clear_personal_savings();
 }
@@ -126,6 +127,12 @@ void settings_load(void)
     buffer buf;
     buffer_init(&buf, data.inf_file, size);
     load_settings(&buf);
+
+#ifdef __3DS__
+    // On 3DS SD cards, synchronous monthly autosaves freeze gameplay for 250ms every 15 seconds.
+    // Default to disabled for fluid 60 FPS gameplay.
+    data.monthly_autosave = 0;
+#endif
 
     if (data.window_width + data.window_height < 500) {
         // most likely migration from Caesar 3
