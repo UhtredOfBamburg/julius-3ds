@@ -38,6 +38,7 @@ const char *n3ds_find_data_dir(const char *arg_dir);
 void n3ds_show_missing_data_error(void);
 
 void n3ds_render_dual_screens(const uint32_t *canvas, int canvas_w, int canvas_h);
+void n3ds_wait_for_vblank(void);
 
 #endif // __3DS__
 #endif // PLATFORM_3DS_H

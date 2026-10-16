@@ -436,7 +436,9 @@ void platform_screen_update(void)
 
 void platform_screen_render(void)
 {
-#ifndef __3DS__
+#ifdef __3DS__
+    n3ds_wait_for_vblank();
+#else
     SDL_RenderPresent(SDL.renderer);
 #endif
 }

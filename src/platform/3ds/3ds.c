@@ -200,8 +200,13 @@ static void n3ds_start_text_input(void)
     keyboard_set_text(text);
 }
 
+static bool irrst_available = false;
+
 void platform_init_callback(void)
 {
+    if (R_SUCCEEDED(irrstInit())) {
+        irrst_available = true;
+    }
     config_set(CONFIG_SCREEN_CURSOR_SCALE, 100);
     config_set(CONFIG_UI_SMOOTH_SCROLLING, 1);
     config_set(CONFIG_UI_DISABLE_MOUSE_EDGE_SCROLLING, 1);
@@ -458,8 +463,10 @@ static void handle_camera_scroll_and_dpad(u32 kDown, u32 kHeld)
 
     circlePosition cpad;
     hidCircleRead(&cpad);
-    circlePosition cstick;
-    irrstCstickRead(&cstick);
+    circlePosition cstick = {0, 0};
+    if (irrst_available) {
+        irrstCstickRead(&cstick);
+    }
 
     int zoom_pct = is_city_context() ? get_top_zoom_speed_percent() : 100;
 
@@ -1667,6 +1674,11 @@ void n3ds_render_dual_screens(const uint32_t *canvas, int canvas_w, int canvas_h
     GSPGPU_FlushDataCache(bot_fb, N3DS_BOTTOM_WIDTH * N3DS_BOTTOM_HEIGHT * 4);
     gfxScreenSwapBuffers(GFX_TOP, false);
     gfxScreenSwapBuffers(GFX_BOTTOM, false);
+}
+
+void n3ds_wait_for_vblank(void)
+{
+    gspWaitForVBlank();
 }
 
 #endif // __3DS__

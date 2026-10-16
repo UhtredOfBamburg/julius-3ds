@@ -50,7 +50,7 @@ AccessControlInfo:
 
   SystemMode                    : 64MB
   SystemModeExt                 : 124MB
-  CpuSpeed                      : 268MHz
+  CpuSpeed                      : 804MHz
   EnableL2Cache                 : true
   CanAccessCore2                : true
 
