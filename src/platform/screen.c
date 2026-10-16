@@ -7,6 +7,7 @@
 #include "graphics/graphics.h"
 #include "graphics/screen.h"
 #include "input/cursor.h"
+#include "platform/3ds/3ds.h"
 #include "platform/android/android.h"
 #include "platform/cursor.h"
 #include "platform/switch/switch.h"
@@ -71,7 +72,7 @@ static void apply_max_scale(int pixel_width, int pixel_height)
 
 static void set_scale_percentage(int new_scale, int pixel_width, int pixel_height)
 {
-#ifdef __vita__
+#if defined(__vita__) || defined(__3DS__)
     scale.requested_percentage = 100;
 #else
     scale.requested_percentage = calc_bound(new_scale, 50, 500);
@@ -99,6 +100,22 @@ static void set_scale_percentage(int new_scale, int pixel_width, int pixel_heigh
 
 int platform_screen_create(const char *title, int display_scale_percentage, int display_id)
 {
+#ifdef __3DS__
+    (void)display_scale_percentage;
+    (void)display_id;
+    platform_screen_destroy();
+    SDL.window = SDL_CreateWindow(title,
+        SDL_WINDOWPOS_CENTERED_DISPLAY(0), SDL_WINDOWPOS_CENTERED_DISPLAY(0),
+        N3DS_TOP_WIDTH, N3DS_TOP_HEIGHT, SDL_WINDOW_SHOWN);
+    if (!SDL.window) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Unable to create 3DS window: %s", SDL_GetError());
+        return 0;
+    }
+    scale.percentage = 100;
+    setting_set_display(1, N3DS_LOGICAL_WIDTH, N3DS_LOGICAL_HEIGHT);
+    screen_set_resolution(N3DS_LOGICAL_WIDTH, N3DS_LOGICAL_HEIGHT);
+    return 1;
+#else
 #ifdef __ANDROID__
     scale.screen_density = android_get_screen_density();
 #endif
@@ -171,6 +188,7 @@ int platform_screen_create(const char *title, int display_scale_percentage, int 
 
     set_scale_percentage(display_scale_percentage, width, height);
     return platform_screen_resize(width, height);
+#endif
 }
 
 static void destroy_screen_texture(void)
@@ -196,6 +214,11 @@ void platform_screen_destroy(void)
 
 int platform_screen_resize(int pixel_width, int pixel_height)
 {
+#ifdef __3DS__
+    (void)pixel_width;
+    (void)pixel_height;
+    return 1;
+#else
     apply_max_scale(pixel_width, pixel_height);
 
     int logical_width = scale_pixels_to_logical(pixel_width);
@@ -223,6 +246,7 @@ int platform_screen_resize(int pixel_width, int pixel_height)
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Unable to create texture: %s", SDL_GetError());
         return 0;
     }
+#endif
 }
 
 int system_scale_display(int display_scale_percentage)
@@ -389,11 +413,16 @@ void platform_screen_recreate_texture(void)
 
 void platform_screen_clear(void)
 {
+#ifndef __3DS__
     SDL_RenderClear(SDL.renderer);
+#endif
 }
 
 void platform_screen_update(void)
 {
+#ifdef __3DS__
+    n3ds_render_dual_screens((const uint32_t *)graphics_canvas(), screen_width(), screen_height());
+#else
     SDL_RenderClear(SDL.renderer);
 #ifndef __vita__
     SDL_UpdateTexture(SDL.texture, NULL, graphics_canvas(), screen_width() * 4);
@@ -402,15 +431,23 @@ void platform_screen_update(void)
 #ifdef PLATFORM_USE_SOFTWARE_CURSOR
     draw_software_mouse_cursor();
 #endif
+#endif
 }
 
 void platform_screen_render(void)
 {
+#ifndef __3DS__
     SDL_RenderPresent(SDL.renderer);
+#endif
 }
 
 void platform_screen_generate_mouse_cursor_texture(int cursor_id, cursor_scale scale, const color_t *cursor_colors)
 {
+#ifdef __3DS__
+    (void)cursor_id;
+    (void)scale;
+    (void)cursor_colors;
+#else
     if (SDL.cursors[cursor_id]) {
         SDL_DestroyTexture(SDL.cursors[cursor_id]);
         SDL.cursors[cursor_id] = 0;
@@ -425,18 +462,21 @@ void platform_screen_generate_mouse_cursor_texture(int cursor_id, cursor_scale s
     }
     SDL_UpdateTexture(SDL.cursors[cursor_id], NULL, cursor_colors, size * sizeof(color_t));
     SDL_SetTextureBlendMode(SDL.cursors[cursor_id], SDL_BLENDMODE_BLEND);
+#endif
 }
 
 void system_set_mouse_position(int *x, int *y)
 {
     *x = calc_bound(*x, 0, screen_width() - 1);
     *y = calc_bound(*y, 0, screen_height() - 1);
+#ifndef __3DS__
     SDL_WarpMouseInWindow(SDL.window, scale_logical_to_pixels(*x), scale_logical_to_pixels(*y));
+#endif
 }
 
 int system_is_fullscreen_only(void)
 {
-#if defined(__ANDROID__) || defined(__SWITCH__) || defined(__vita__)
+#if defined(__ANDROID__) || defined(__SWITCH__) || defined(__vita__) || defined(__3DS__)
     return 1;
 #else
     return 0;
@@ -449,6 +489,12 @@ color_t *system_create_framebuffer(int width, int height)
     int pitch;
     SDL_LockTexture(SDL.texture, NULL, (void **) &framebuffer, &pitch);
     SDL_UnlockTexture(SDL.texture);
+#elif defined(__3DS__)
+    (void)width;
+    (void)height;
+    if (!framebuffer) {
+        framebuffer = (color_t *) malloc((size_t) N3DS_PANORAMIC_WIDTH * N3DS_LOGICAL_HEIGHT * sizeof(color_t));
+    }
 #else
     free(framebuffer);
     framebuffer = (color_t *) malloc((size_t) width * height * sizeof(color_t));

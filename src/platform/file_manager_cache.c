@@ -6,6 +6,7 @@
 #include "platform/file_manager.h"
 
 #include <dirent.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -50,7 +51,6 @@ const dir_info *platform_file_manager_cache_get_dir_info(const char *dir)
     info->next = 0;
     struct dirent *entry;
     file_info *file_item = 0;
-    int dir_name_offset = 0;
     while ((entry = readdir(d))) {
         const char *name = entry->d_name;
         if (name[0] == '.') {
@@ -79,25 +79,22 @@ const dir_info *platform_file_manager_cache_get_dir_info(const char *dir)
         } while (c != '.' && c);
         file_item->extension = extension;
 
-        // Check type
+        // Check type: in Caesar III, directories never have extensions (555, wavs, smk, mp3).
+        // Skipping stat() for files with extensions avoids 800+ slow FAT32 IPC stat() calls in wavs/ on 3DS!
         int type = TYPE_FILE;
-        struct stat file_info;
+        if (!*file_item->extension) {
+            struct stat st_info;
+            char full_name[2 * FILE_NAME_MAX];
+            snprintf(full_name, sizeof(full_name), "%s/%s", dir, name);
 
-        if (stat_status == STAT_UNTESTED) {
-            stat_status = stat(file_item->name, &file_info) == STAT_DOESNT_WORK ? STAT_DOESNT_WORK : STAT_WORKS;
-        }
-        if (stat_status == STAT_WORKS) {
-            stat(file_item->name, &file_info);
-            if (!S_ISREG(file_info.st_mode)) {
-                type = TYPE_DIR;
+            if (stat_status == STAT_UNTESTED) {
+                stat_status = stat(full_name, &st_info) == STAT_DOESNT_WORK ? STAT_DOESNT_WORK : STAT_WORKS;
             }
-        } else {
-            // When stat does not work, we check if a file is a directory by trying to open it as a dir
-            // For performance reasons, we only check for a directory if the name has no extension
-            // This is effectively a hack, and definitely not full-proof, but the performance gains are well worth it
-            if (!*file_item->extension) {
-                static char full_name[FILE_NAME_MAX];
-                strncpy(full_name + dir_name_offset, name, FILE_NAME_MAX - 1 - dir_name_offset);
+            if (stat_status == STAT_WORKS) {
+                if (stat(full_name, &st_info) == 0 && !S_ISREG(st_info.st_mode)) {
+                    type = TYPE_DIR;
+                }
+            } else {
                 DIR *file_d = opendir(full_name);
                 if (file_d) {
                     type = TYPE_DIR;

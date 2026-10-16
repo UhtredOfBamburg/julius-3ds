@@ -17,7 +17,7 @@
 #define HOTKEY_OFFSET MAPPING_ACTION_ROTATE_MAP_LEFT
 #define MAX_HOTKEYS 6
 #define MAX_AXIS 8
-#define MAX_BUTTONS 20
+#define MAX_BUTTONS 32
 #define MAX_TRACKBALLS 4
 #define MAX_HATS 4
 #define MAX_CONTROLLERS 6
@@ -166,6 +166,13 @@ int joystick_has_model(const char *guid)
 
 void joystick_add_model(const joystick_model *model)
 {
+    joystick_model *existing = get_model_by_guid(model->guid);
+    if (existing) {
+        int count = existing->connected_joysticks;
+        memcpy(existing, model, sizeof(joystick_model));
+        existing->connected_joysticks = count;
+        return;
+    }
     for (int i = 0; i < MAX_CONTROLLERS; ++i) {
         if (!data.connected_models[i].connected_joysticks) {
             memcpy(&data.connected_models[i], model, sizeof(joystick_model));
@@ -229,13 +236,19 @@ void joystick_update_element(int joystick_id, joystick_element element, int elem
     }
     switch (element) {
         case JOYSTICK_ELEMENT_BUTTON:
-            joystick->button[element_id] = value1;
+            if (element_id >= 0 && element_id < MAX_BUTTONS) {
+                joystick->button[element_id] = value1;
+            }
             break;
         case JOYSTICK_ELEMENT_HAT:
-            update_hat(&joystick->hat[element_id], value1);
+            if (element_id >= 0 && element_id < MAX_HATS) {
+                update_hat(&joystick->hat[element_id], value1);
+            }
             break;
         case JOYSTICK_ELEMENT_AXIS:
-            joystick->axis[element_id] = (abs(value1) > AXIS_MAX_THRESHOLD) ? value1 : 0;
+            if (element_id >= 0 && element_id < MAX_AXIS) {
+                joystick->axis[element_id] = (abs(value1) > AXIS_MAX_THRESHOLD) ? value1 : 0;
+            }
             break;
         case JOYSTICK_ELEMENT_TRACKBALL:
             update_trackball(&joystick->trackball[element_id], value1, value2);
@@ -492,6 +505,18 @@ static int translate_mapping_reset(void)
 
 static int translate_mouse_cursor_position(void)
 {
+#ifdef __3DS__
+    if (window_is(WINDOW_CITY) ||
+        window_is(WINDOW_CITY_MILITARY) ||
+        window_is(WINDOW_BUILD_MENU) ||
+        window_is(WINDOW_OVERLAY_MENU) ||
+        window_is(WINDOW_TOP_MENU) ||
+        window_is(WINDOW_EMPIRE)) {
+        speed_clear(&data.mouse.x_speed);
+        speed_clear(&data.mouse.y_speed);
+        return 0;
+    }
+#endif
     mapped_input cursor_input[NUM_DIRECTIONS] = {0};
 
     int handled = get_joystick_input_for_action(MAPPING_ACTION_MOUSE_CURSOR_UP, &cursor_input[DIRECTION_UP]);
@@ -619,6 +644,9 @@ static int translate_window_scrolling(void)
 
 static int translate_map_scrolling(void)
 {
+#ifdef __3DS__
+    return 0;
+#endif
     if (!window_has_map_scrolling()) {
         return 0;
     }

@@ -29,6 +29,7 @@ Enhancements for Julius include:
 - Support for the [high-quality MP3 files](https://github.com/bvschaik/julius/wiki/MP3-Support) once provided on the Sierra website
 
 Supported platforms:
+- New Nintendo 3DS (.3dsx and .cia)
 - Windows
 - Linux AppImage
 - MacOS
@@ -36,6 +37,37 @@ Supported platforms:
 - Nintendo Switch
 - Android
 - Any compatible browser (Emscripten)
+
+## 🏛️ New Nintendo 3DS Edition
+
+This port features a bespoke **Dual-Screen architecture** crafted specifically for the **New Nintendo 3DS**:
+
+* **Top Screen (Widescreen 400x240):** Shows the full city with crisp integer scaling.
+  * `ZOOM 1.0X`: Native 1:1 pixel-perfect reproduction (crystal clear).
+  * `ZOOM 2.0X`: Exact 1:2 integer upscale (buildings and citizens 2x larger, sharp 2x2 blocks).
+  * `ZOOM 0.5X`: Exact 2:1 integer panoramic downscale (dynamic 962x480 canvas, 4x city area, zero Moiré stripes).
+  * Cycle zoom with **`ZL`** / **`ZR`**.
+* **Bottom Screen (Touch Screen 320x240):**
+  * Fluted marble Roman columns frame the central construction viewport.
+  * Fixed right-hand stone panel hosting all 15 building categories, advisors, empire map, and rotation.
+  * Embedded Roman statue buttons for `MAPA / OVERLAYS` and `MENU`.
+* **Contextual Stylus Gameplay:**
+  * **Modo Exploracao:** Dragging with the Stylus pans the camera smoothly; a quick tap inspects buildings or legions.
+  * **Modo Construtor:** Selecting any building locks the camera; the Stylus draws roads, houses, aqueducts, and walls directly onto the map!
+  * Tap the active category button or press **`B`** to exit construction.
+* **Camera Controls & D-Pad:**
+  * **Circle Pad:** Progressive quadratic analog camera movement scaled to top zoom level.
+  * **C-Stick & `L + D-Pad`:** Ultra-slow precision micro-scrolling (2px/frame).
+  * **D-Pad `↓`:** Toggle in-game Menu (Save, Load, Options, Exit).
+  * **D-Pad `↑`:** Toggle Minimap + Overlays on the bottom screen.
+  * **D-Pad `←` / `→`:** Rotate city orientation 90°.
+  * **`SELECT`:** Toggle bottom viewport zoom (`1.0X` native <-> `0.5X` wide).
+  * **`START`:** Pause / Unpause.
+
+### Installing on 3DS:
+1. **CIA (Home Menu):** Install `julius.cia` using **FBI**.
+2. **3DSX (Homebrew Launcher):** Copy `julius.3dsx` and `julius.smdh` to `sdmc:/3ds/julius/`.
+3. **Game Files:** Copy original Caesar III files (`c3.eng`, `c3.sg2`, `c3.555`, `wavs/`, etc.) from your GOG, Steam, or CD installation to `sdmc:/3ds/julius/`.
 
 While Julius does not implement any gameplay changes, a fork of Julius named [Augustus](https://github.com/Keriew/augustus) is implementing many long-wanted gameplay changes, such as roadblocks. So use Julius for a more vanilla experience with some visual improvements, or Augustus for a different gameplay experience.
 

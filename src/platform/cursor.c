@@ -3,6 +3,7 @@
 #include "game/system.h"
 #include "graphics/color.h"
 #include "input/cursor.h"
+#include "platform/3ds/3ds.h"
 #include "platform/screen.h"
 #include "platform/switch/switch.h"
 #include "platform/vita/vita.h"

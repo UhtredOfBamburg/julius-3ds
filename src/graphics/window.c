@@ -103,10 +103,10 @@ void window_go_back(void)
 
 static void update_input_before(void)
 {
-    int handled = touch_to_mouse();
-    handled |= joystick_to_mouse_and_keyboard();
-    if (!handled) {
-        mouse_determine_button_state();  // touch and joystick override mouse
+    int touch_handled = touch_to_mouse();
+    joystick_to_mouse_and_keyboard();
+    if (!touch_handled) {
+        mouse_determine_button_state();
     }
     hotkey_handle_global_keys();
 }

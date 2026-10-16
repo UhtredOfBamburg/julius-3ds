@@ -219,3 +219,19 @@ void window_overlay_menu_show(void)
     init();
     window_show(&window);
 }
+
+void window_overlay_menu_get_bounds(int *x, int *y, int *width, int *height)
+{
+    int x_offset = get_sidebar_x_offset();
+    if (data.selected_submenu > 0 && data.num_submenu_items > 0) {
+        *x = x_offset - SUBMENU_X_OFFSET - 4;
+        *y = MENU_Y_OFFSET - 4;
+        *width = 168;
+        *height = 200;
+    } else {
+        *x = x_offset - MENU_X_OFFSET - 4;
+        *y = MENU_Y_OFFSET - 4;
+        *width = 168;
+        *height = 200;
+    }
+}

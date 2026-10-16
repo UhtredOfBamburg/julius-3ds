@@ -28,13 +28,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "platform/3ds/3ds.h"
 #include "platform/android/android.h"
 #include "platform/emscripten/emscripten.h"
 #include "platform/ios/ios.h"
 #include "platform/switch/switch.h"
 #include "platform/vita/vita.h"
 
-#if defined(_WIN32) || defined(__vita__) || defined(__SWITCH__) || defined(__ANDROID__)
+#if defined(_WIN32) || defined(__vita__) || defined(__SWITCH__) || defined(__ANDROID__) || defined(__3DS__)
 #include <string.h>
 #endif
 
@@ -83,7 +84,7 @@ static void handler(int sig)
     exit_with_status(1);
 }
 
-#if defined(_WIN32) || defined(__vita__) || defined(__SWITCH__) || defined(__ANDROID__)
+#if defined(_WIN32) || defined(__vita__) || defined(__SWITCH__) || defined(__ANDROID__) || defined(__3DS__)
 /* Log to separate file on windows, since we don't have a console there */
 static FILE *log_file = 0;
 
@@ -307,13 +308,19 @@ static void handle_event(SDL_Event *event)
             break;
 
         case SDL_FINGERDOWN:
+#ifndef __3DS__
             platform_touch_start(&event->tfinger);
+#endif
             break;
         case SDL_FINGERMOTION:
+#ifndef __3DS__
             platform_touch_move(&event->tfinger);
+#endif
             break;
         case SDL_FINGERUP:
+#ifndef __3DS__
             platform_touch_end(&event->tfinger);
+#endif
             break;
 
         case SDL_JOYAXISMOTION:
@@ -378,13 +385,13 @@ static void teardown(void)
 static void main_loop(void)
 {
     SDL_Event event;
-#ifdef PLATFORM_ENABLE_PER_FRAME_CALLBACK
-    platform_per_frame_callback();
-#endif
     /* Process event queue */
     while (SDL_PollEvent(&event)) {
         handle_event(&event);
     }
+#ifdef PLATFORM_ENABLE_PER_FRAME_CALLBACK
+    platform_per_frame_callback();
+#endif
     if (data.quit) {
 #ifdef __EMSCRIPTEN__
         emscripten_cancel_main_loop();
@@ -570,6 +577,9 @@ static int pre_init(const char *custom_data_dir)
 
 static void setup(const julius_args *args)
 {
+#ifdef __3DS__
+    n3ds_early_init();
+#endif
     signal(SIGSEGV, handler);
     setup_logging();
 
@@ -582,12 +592,19 @@ static void setup(const julius_args *args)
 
 #ifdef __vita__
     const char *base_dir = VITA_PATH_PREFIX;
+#elif defined(__3DS__)
+    const char *base_dir = n3ds_find_data_dir(args->data_directory);
 #else
     const char *base_dir = args->data_directory;
 #endif
 
     if (!pre_init(base_dir)) {
         SDL_Log("Exiting: game pre-init failed");
+#ifdef __3DS__
+        SDL_Quit();
+        teardown_logging();
+        n3ds_show_missing_data_error();
+#endif
         exit_with_status(1);
     }
 
@@ -638,7 +655,7 @@ int main(int argc, char **argv)
 {
     julius_args args;
     if (!platform_parse_arguments(argc, argv, &args)) {
-#if !defined(_WIN32) && !defined(__vita__) && !defined(__SWITCH__) && !defined(__ANDROID__) && !defined(__APPLE__)
+#if !defined(_WIN32) && !defined(__vita__) && !defined(__SWITCH__) && !defined(__ANDROID__) && !defined(__APPLE__) && !defined(__3DS__)
         // Only exit on Linux platforms where we know the system will not throw any weird arguments our way
         exit_with_status(1);
 #endif

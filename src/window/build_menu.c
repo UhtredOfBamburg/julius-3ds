@@ -322,3 +322,16 @@ void window_build_menu_hide(void)
     data.selected_submenu = SUBMENU_NONE;
     window_city_show();
 }
+
+void window_build_menu_get_bounds(int *x, int *y, int *width, int *height)
+{
+    int x_offset = get_sidebar_x_offset();
+    int h = MENU_ITEM_HEIGHT * data.num_items;
+    if (h < 24) {
+        h = 24;
+    }
+    *x = x_offset - MENU_X_OFFSET;
+    *y = data.y_offset + MENU_Y_OFFSET;
+    *width = 256;
+    *height = h;
+}

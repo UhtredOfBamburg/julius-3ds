@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 include(CMakeDependentOption)
 
-set(TARGET_PLATFORM "default" CACHE STRING "Platform to cross-compile for. Options: vita switch android ios emscripten. Leave blank for no cross compilation")
-set_property(CACHE TARGET_PLATFORM PROPERTY STRINGS default vita switch android ios emscripten)
+set(TARGET_PLATFORM "default" CACHE STRING "Platform to cross-compile for. Options: vita switch 3ds android ios emscripten. Leave blank for no cross compilation")
+set_property(CACHE TARGET_PLATFORM PROPERTY STRINGS default vita switch 3ds android ios emscripten)
 
 string(TOLOWER ${TARGET_PLATFORM} TARGET_PLATFORM)
 
@@ -19,6 +19,10 @@ endif()
 
 if(${TARGET_PLATFORM} STREQUAL "switch" AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     message(FATAL_ERROR "Please use /opt/devkitpro/portlibs/switch/bin/aarch64-none-elf-cmake to configure")
+endif()
+
+if(${TARGET_PLATFORM} STREQUAL "3ds" AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+    message(FATAL_ERROR "Please use /opt/devkitpro/portlibs/3ds/bin/arm-none-eabi-cmake to configure")
 endif()
 
 if(${TARGET_PLATFORM} STREQUAL "emscripten" AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
@@ -62,7 +66,7 @@ set(SHORT_NAME julius)
 set(USER_FRIENDLY_NAME Julius)
 project(${SHORT_NAME} C)
 
-if (NINTENDO_SWITCH)
+if (NINTENDO_SWITCH OR NINTENDO_3DS)
     find_package(PkgConfig REQUIRED)
 endif()
 
@@ -228,6 +232,11 @@ elseif (NINTENDO_SWITCH)
     set(PLATFORM_FILES
         ${PLATFORM_FILES}
         ${PROJECT_SOURCE_DIR}/src/platform/switch/switch.c
+    )
+elseif (NINTENDO_3DS)
+    set(PLATFORM_FILES
+        ${PLATFORM_FILES}
+        ${PROJECT_SOURCE_DIR}/src/platform/3ds/3ds.c
     )
 elseif (${TARGET_PLATFORM} STREQUAL "android")
     set(PLATFORM_FILES
@@ -904,6 +913,22 @@ nx_create_nro (${PROJECT_NAME}
     NACP ${PROJECT_NAME}.nacp
     ICON ${CMAKE_SOURCE_DIR}/res/switch/icon0.jpg
 )
+
+elseif(NINTENDO_3DS)
+
+    pkg_check_modules(SDL2 REQUIRED IMPORTED_TARGET sdl2 SDL2_mixer)
+    target_link_libraries(${SHORT_NAME} PkgConfig::SDL2 ctru m)
+
+    ctr_generate_smdh(${PROJECT_NAME}.smdh
+        NAME "Julius"
+        DESCRIPTION "Caesar III Open Source Engine (New 3DS)"
+        AUTHOR "Bianca van Schaik / 3DS Port"
+        ICON ${CMAKE_SOURCE_DIR}/res/julius_48.png
+    )
+
+    ctr_create_3dsx(${PROJECT_NAME}
+        SMDH ${PROJECT_NAME}.smdh
+    )
 
 else()
     if (UNIX AND NOT APPLE AND (CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang"))

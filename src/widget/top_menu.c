@@ -204,7 +204,11 @@ static void refresh_background(void)
         image_draw(image_base + i % 8, i * block_width, 0);
     }
     // black panels for funds/pop/time
+#ifdef __3DS__
+    if (1) {
+#else
     if (s_width < 800) {
+#endif
         image_draw(image_base + 14, 336, 0);
     } else if (s_width < 1024) {
         image_draw(image_base + 14, 336, 0);
@@ -235,7 +239,11 @@ void widget_top_menu_draw(int force)
     if (treasury < 0) {
         treasure_color = COLOR_FONT_RED;
     }
+#ifdef __3DS__
+    if (1) {
+#else
     if (s_width < 800) {
+#endif
         data.offset_funds = 338;
         data.offset_population = 453;
         data.offset_date = 547;

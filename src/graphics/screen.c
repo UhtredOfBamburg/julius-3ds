@@ -24,7 +24,9 @@ void screen_set_resolution(int width, int height)
     graphics_init_canvas(width, height);
 
     city_view_set_viewport(width, height);
+#ifndef __3DS__
     city_warning_clear_all();
+#endif
     window_invalidate();
 }
 

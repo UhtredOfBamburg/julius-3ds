@@ -92,6 +92,22 @@ static mapping_element default_mapping[] = {
         {JOYSTICK_ELEMENT_BUTTON, SWITCH_PAD_L}, {JOYSTICK_ELEMENT_BUTTON, SWITCH_PAD_R}
     }}
 };
+#elif defined(__3DS__)
+#include "platform/3ds/pad.h"
+
+static mapping_element default_mapping[] = {
+    {MAPPING_ACTION_MOUSE_CURSOR_UP, {{JOYSTICK_ELEMENT_AXIS, N3DS_LEFT_ANALOG_Y, JOYSTICK_AXIS_NEGATIVE}}},
+    {MAPPING_ACTION_MOUSE_CURSOR_LEFT, {{JOYSTICK_ELEMENT_AXIS, N3DS_LEFT_ANALOG_X, JOYSTICK_AXIS_NEGATIVE}}},
+    {MAPPING_ACTION_MOUSE_CURSOR_DOWN, {{JOYSTICK_ELEMENT_AXIS, N3DS_LEFT_ANALOG_Y, JOYSTICK_AXIS_POSITIVE}}},
+    {MAPPING_ACTION_MOUSE_CURSOR_RIGHT, {{JOYSTICK_ELEMENT_AXIS, N3DS_LEFT_ANALOG_X, JOYSTICK_AXIS_POSITIVE}}},
+    {MAPPING_ACTION_LEFT_MOUSE_BUTTON, {{JOYSTICK_ELEMENT_BUTTON, N3DS_PAD_A}}},
+    {MAPPING_ACTION_RIGHT_MOUSE_BUTTON, {{JOYSTICK_ELEMENT_BUTTON, N3DS_PAD_B}}},
+    {MAPPING_ACTION_SCROLL_WINDOW_UP, {{JOYSTICK_ELEMENT_AXIS, N3DS_RIGHT_ANALOG_Y, JOYSTICK_AXIS_NEGATIVE}}},
+    {MAPPING_ACTION_SCROLL_WINDOW_DOWN, {{JOYSTICK_ELEMENT_AXIS, N3DS_RIGHT_ANALOG_Y, JOYSTICK_AXIS_POSITIVE}}},
+    {MAPPING_ACTION_INCREASE_GAME_SPEED, {{JOYSTICK_ELEMENT_BUTTON, N3DS_PAD_X}}},
+    {MAPPING_ACTION_DECREASE_GAME_SPEED, {{JOYSTICK_ELEMENT_BUTTON, N3DS_PAD_Y}}},
+    {MAPPING_ACTION_SHOW_VIRTUAL_KEYBOARD, {{JOYSTICK_ELEMENT_BUTTON, N3DS_PAD_START}}}
+};
 #else
 static mapping_element default_mapping[] = {
     {MAPPING_ACTION_MOUSE_CURSOR_UP, {{JOYSTICK_ELEMENT_AXIS, 1, JOYSTICK_AXIS_NEGATIVE}}},
@@ -148,7 +164,7 @@ static controller_mapping controller_mappings[] = {
 
 static int use_joystick(void)
 {
-#if defined(__vita__) || defined(__SWITCH__) || defined(__ANDROID__)
+#if defined(__vita__) || defined(__SWITCH__) || defined(__ANDROID__) || defined(__3DS__)
     return 1;
 #else
     return 0;
@@ -250,6 +266,9 @@ static void add_joystick(int index)
     SDL_GameController *controller = 0;
     SDL_Joystick *joystick = 0;
 
+#ifdef __3DS__
+    joystick = SDL_JoystickOpen(index);
+#else
     if (SDL_IsGameController(index)) {
         controller = SDL_GameControllerOpen(index);
         joystick = SDL_GameControllerGetJoystick(controller);
@@ -257,6 +276,7 @@ static void add_joystick(int index)
     } else {
         joystick = SDL_JoystickOpen(index);
     }
+#endif
     int instance_id = SDL_JoystickInstanceID(joystick);
     if (joystick_is_active(instance_id)) {
         if (controller) {
@@ -269,9 +289,13 @@ static void add_joystick(int index)
 
     static char guid[JOYSTICK_MAX_GUID];
     SDL_JoystickGetGUIDString(SDL_JoystickGetGUID(joystick), guid, JOYSTICK_MAX_GUID);
+#ifdef __3DS__
+    create_new_model(guid, SDL_JoystickName(joystick), instance_id, controller);
+#else
     if (!joystick_has_model(guid)) {
         create_new_model(guid, SDL_JoystickName(joystick), instance_id, controller);
     }
+#endif
     if (!joystick_add(instance_id, guid)) {
         if (controller) {
             SDL_GameControllerClose(controller);
